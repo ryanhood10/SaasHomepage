@@ -1,35 +1,46 @@
 const User = require('../models/user');
 const ErrorResponse = require('../utils/errorResponse');
 
-
 // user sign up
 exports.signup = async (req, res, next) => {
+    console.log('Incoming signup request:', req.body); // Log the incoming request
 
-  const { email } = req.body;
+    const { name, email, password } = req.body;
 
-  const useExist = await User.findOne({ email });
-  if (useExist) {
-    return next(new ErrorResponse("E-mail already registered", 400));
-  }
+    // Validate required fields
+    if (!name || !email || !password) {
+        return next(new ErrorResponse("All fields are required", 400));
+    }
 
-  try {
-    const user = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-    });
+    try {
+        // Check if the email is already registered
+        const userExist = await User.findOne({ email });
+        if (userExist) {
+            console.log('Email already registered:', email);
+            return next(new ErrorResponse("E-mail already registered", 400));
+        }
 
-    const newUser = await user.save();
+        // Create the new user
+        const user = new User({
+            name,
+            email,
+            password,
+        });
 
-    //const  user = await User.create(req.body);
-    res.status(201).json({
-      success: true,
-      user
-    });
-  } catch (err) {
-    next(err);
-  }
-}
+        const newUser = await user.save();
+
+        // Log the newly created user
+        console.log('New user created:', newUser);
+
+        res.status(201).json({
+            success: true,
+            user: newUser
+        });
+    } catch (err) {
+        console.error('Error during signup:', err); // Log the error
+        next(err);
+    }
+};
 
 
 
